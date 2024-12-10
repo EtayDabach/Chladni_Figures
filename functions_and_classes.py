@@ -57,17 +57,51 @@ def wave_amp(x_vals:np.ndarray, y_vals:np.ndarray, n:int, m:int, L_x=1, L_y=1, b
 
 
 
-def time_evolution(omega:float, t:np.ndarray):
+def time_evolution(omega:float, t:float):
     """_summary_
 
     Args:
         omega (float): _description_
-        t (np.ndarray): _description_
+        t (float): _description_
 
     Returns:
         _type_: _description_
     """
     return np.sin(omega * t)
+
+
+
+def rect_omega(n:int, m:int, L_x=1, L_y=1, speed_of_sound=1.0):
+    """_summary_
+
+    Args:
+        n (int): _description_
+        m (int): _description_
+        L_x (int, optional): _description_. Defaults to 1.
+        L_y (int, optional): _description_. Defaults to 1.
+        speed_of_sound (float, optional): _description_. Defaults to 1.0.
+
+    Returns:
+        _type_: _description_
+    """
+    return speed_of_sound * np.sqrt((n/L_x)**2 + (m/L_y)**2)
+
+
+
+def circ_omega(n:int, m:int, radius=1.0, speed_of_sound=1.0):
+    """_summary_
+
+    Args:
+        n (int): _description_
+        m (int): _description_
+        radius (float, optional): _description_. Defaults to 1.0.
+        speed_of_sound (float, optional): _description_. Defaults to 1.0.
+
+    Returns:
+        _type_: _description_
+    """
+    k_nm = sps.jn_zeros(n,m)[m-1]
+    return (k_nm / radius) * speed_of_sound
 
 
 
@@ -125,7 +159,7 @@ class Particles:
     
     def step(self, **amplitude_params) -> None:
         """
-        
+
         """
         n_mode = amplitude_params['n']
         m_mode = amplitude_params['m']
