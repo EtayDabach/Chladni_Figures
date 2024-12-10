@@ -12,7 +12,7 @@ import tkinter as tk
 
 
 
-def wave_amp(x_vals:np.ndarray, y_vals:np.ndarray, n:int, m:int, L_x=2, L_y=2, boundary='0_onS', mtype='rect' , abso='yes') -> np.ndarray:
+def wave_amp(x_vals:np.ndarray, y_vals:np.ndarray, n:int, m:int, L_x=1, L_y=1, boundary='0_onS', mtype='rect' , abso='yes') -> np.ndarray:
     """Calculate the amplitude of the wave in a rectangular or circular membrane. 
     For rectangular membrane (mtype='rect') with boundary condition of maximum amplitude (boundary='Max_onS'), the modes n and m must be odd numbers to get the wanted result.
     For circular membrane with axisymmetric ,rotational symmetry, (mtype='circ_sym') n mode is always n=0 to get the bessel function of first kind in order 0 J_0.
@@ -22,13 +22,13 @@ def wave_amp(x_vals:np.ndarray, y_vals:np.ndarray, n:int, m:int, L_x=2, L_y=2, b
 
         y_vals (np.ndarray): Coordinates of y values for rectangular membrane or theta in polar coordinates for circular membrane.
 
-        n (int): The n mode of the wave in the membrane (for circular membrane its reflected as the n order of the first kind bessel function J_n).
+        n (int): The n mode of the wave in the x axis in the membrane (for circular membrane its reflected as the n order of the first kind bessel function J_n).
 
-        m (int): The m mode of the wave in the membrane (for circular membrane its reflected as the m zero of the J_n function, k_{n,m}).
+        m (int): The m mode of the wave in the y axis in the membrane (for circular membrane its reflected as the m zero of the J_n function, k_{n,m}).
 
-        L_x (int, optional): Length of the x side for rectangular membrane (not affecting circular). Defaults to 2.
+        L_x (int, optional): Length of the x side for rectangular membrane (not affecting circular). Defaults to 1.
 
-        L_y (int, optional): Length of the y side for rectangular membrane (not affecting circular). Defaults to 2.
+        L_y (int, optional): Length of the y side for rectangular membrane (not affecting circular). Defaults to 1.
 
         boundary (str, optional): Boundary condition of the membrane. For rectangular you can use '0_onS' or 'Max_onS', for circular only '0_onS'. Defaults to '0_onS'
         .
@@ -57,9 +57,23 @@ def wave_amp(x_vals:np.ndarray, y_vals:np.ndarray, n:int, m:int, L_x=2, L_y=2, b
 
 
 
+def time_evolution(omega:float, t:np.ndarray):
+    """_summary_
+
+    Args:
+        omega (float): _description_
+        t (np.ndarray): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    return np.sin(omega * t)
+
+
 
 class Particles:
-    """_summary_
+    """Generate (points) particles from uniform distribution with random location on the membrane.
+    Deafult membrane is 'rect' type.
 
     Attributes
     ----------
@@ -70,7 +84,8 @@ class Particles:
         Number of points (particles) to generate.
 
     a : int, b : int
-        Limits to generates points for rectangular membrane.
+        Limits to generates points for rectangular membrane. Needs to consider the size of the membrane (L_x and L_y) for better results.
+        For now its only works for SQUARE membranes (L_x=L_y).
     
     ttype : str
         Type of the membrane as 'rect' or 'circ'.
@@ -80,11 +95,24 @@ class Particles:
 
 
     """
-    def __init__(self, amplitude=wave_amp, a=0, b=2, ttype='rect', num_points=10000, delta=0.05) -> None:
+    def __init__(self, amplitude=wave_amp, a=0, b=1, ttype='rect', num_points=10000, delta=0.05) -> None:
+        """Constructs all the necessary attributes for the Particles object.
+
+        Args:
+            amplitude (function, optional): A function that calculate the amplitude in the membrane.. Defaults to wave_amp.
+            a (int, optional): Minimum limit to generates points for rectangular membrane. Defaults to 0.
+            b (int, optional): Maximum limits to generates points for rectangular membrane. Defaults to 1.
+            ttype (str, optional): Type of the membrane as 'rect' or 'circ'. Defaults to 'rect'.
+            num_points (int, optional): Number of points (particles) to generate. Defaults to 10000.
+            delta (float, optional): Control the size of the step for the particles. Defaults to 0.05.
+        """
         self.num_points = num_points
         self.amplitude = amplitude
-        self.delta = delta
         self.type=ttype
+        if self.type == 'circ':
+            self.delta = delta/10
+        else:
+            self.delta = delta
 
         # generate points based on the membrane shape
         if self.type == 'circ':
@@ -96,6 +124,9 @@ class Particles:
 
     
     def step(self, **amplitude_params) -> None:
+        """
+        
+        """
         n_mode = amplitude_params['n']
         m_mode = amplitude_params['m']
         # normalization for the step based on the membrane shape
