@@ -126,7 +126,9 @@ class Particles:
     
     delta : float
         Control the size of the step for the particles.
-
+    
+    prev_points : ndarray or int
+        Previous position of the points
 
     """
     def __init__(self, amplitude=wave_amp, a=0, b=1, ttype='rect', num_points=10000, delta=0.05) -> None:
@@ -144,6 +146,7 @@ class Particles:
         self.num_points = num_points
         self.amplitude = amplitude
         self.type=ttype
+        self.prev_points = 0
         if self.type == 'circ':
             self.delta = delta/10
         else:
