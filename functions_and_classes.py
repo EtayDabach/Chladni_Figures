@@ -13,27 +13,20 @@ import tkinter as tk
 
 
 def wave_amp(x_vals:np.ndarray, y_vals:np.ndarray, n:int, m:int, L_x=1, L_y=1, boundary='0_onS', mtype='rect' , abso='yes') -> np.ndarray:
-    """Calculate the amplitude of the wave in a rectangular or circular membrane. 
+    """
+    Calculate the amplitude of the wave in a rectangular or circular membrane. 
     For rectangular membrane (mtype='rect') with boundary condition of maximum amplitude (boundary='Max_onS'), the modes n and m must be odd numbers to get the wanted result.
     For circular membrane with axisymmetric ,rotational symmetry, (mtype='circ_sym') n mode is always n=0 to get the bessel function of first kind in order 0 J_0.
 
     Args:
         x_vals (np.ndarray): Coordinates of x values for rectangular membrane or radius in polar coordinates for circular membrane.
-
         y_vals (np.ndarray): Coordinates of y values for rectangular membrane or theta in polar coordinates for circular membrane.
-
-        n (int): The n mode of the wave in the x axis in the membrane (for circular membrane its reflected as the n order of the first kind bessel function J_n).
-
-        m (int): The m mode of the wave in the y axis in the membrane (for circular membrane its reflected as the m zero of the J_n function, k_{n,m}).
-
+        n (int): The n mode of the wave in the x axis of the membrane (for circular membrane its reflected as the n order of the first kind bessel function J_n).
+        m (int): The m mode of the wave in the y axis of the membrane (for circular membrane its reflected as the m zero of the J_n function, k_{n,m}).
         L_x (int, optional): Length of the x side for rectangular membrane (not affecting circular). Defaults to 1.
-
         L_y (int, optional): Length of the y side for rectangular membrane (not affecting circular). Defaults to 1.
-
-        boundary (str, optional): Boundary condition of the membrane. For rectangular you can use '0_onS' or 'Max_onS', for circular only '0_onS'. Defaults to '0_onS'
-        .
+        boundary (str, optional): Boundary condition of the membrane. For rectangular you can use '0_onS' or 'Max_onS', for circular only '0_onS'. Defaults to '0_onS'.
         mtype (str, optional): Define the type of the membrane as 'rect' , 'circ_sym' or 'circ_gen'. For 'circ_sym' the n mode value is always 0. Defaults to 'rect'.
-
         abso (str, optional): Option to get absolute value for the amplitude as 'yes' or 'no'. Defaults to 'yes'.
 
     Returns:
@@ -57,48 +50,54 @@ def wave_amp(x_vals:np.ndarray, y_vals:np.ndarray, n:int, m:int, L_x=1, L_y=1, b
 
 
 
-def time_evolution(omega:float, t:float):
-    """_summary_
+def time_evolution(omega:float, t:float) -> float:
+    """
+    Function for time evolution of the wave ,T(t), using the method of sepration of variables for both rectangular and circular membrane.
+    The full function contains sum of sine and cosine, but for in this function its only contains the sine (initial condition in t=0 is amplitude=0).
+
+        T(t)=a_{n,m}*cos(omega_{n,m}t) + b_{n,m}*sin(omega_{n,m}t)
 
     Args:
-        omega (float): _description_
-        t (float): _description_
+        omega (float): The angular velocity 
+        t (float): Time
 
     Returns:
-        _type_: _description_
+        float: Returns sine of omega*t
     """
     return np.sin(omega * t)
 
 
 
-def rect_omega(n:int, m:int, L_x=1, L_y=1, speed_of_sound=1.0):
-    """_summary_
+def rect_omega(n:int, m:int, L_x=1, L_y=1, speed_of_sound=1.0) -> float:
+    """
+    Calculate the angular velocity of the wave in rectangular membrane based on the modes n and m and the shape L_x and L_y.
 
     Args:
-        n (int): _description_
-        m (int): _description_
-        L_x (int, optional): _description_. Defaults to 1.
-        L_y (int, optional): _description_. Defaults to 1.
-        speed_of_sound (float, optional): _description_. Defaults to 1.0.
+        n (int): The n mode of the wave in the x axis of the membrane
+        m (int): The m mode of the wave in the y axis of the membrane
+        L_x (int, optional): Length of the x side for rectangular membrane. Defaults to 1.
+        L_y (int, optional): Length of the y side for rectangular membrane. Defaults to 1.
+        speed_of_sound (float, optional): The speed of sound (wave speed) in the membrane. Defaults to 1.0.
 
     Returns:
-        _type_: _description_
+        float: Returns the angular velocity, omega, in rectangular membrane.
     """
     return speed_of_sound * np.sqrt((n/L_x)**2 + (m/L_y)**2)
 
 
 
-def circ_omega(n:int, m:int, radius=1.0, speed_of_sound=1.0):
-    """_summary_
+def circ_omega(n:int, m:int, radius=1.0, speed_of_sound=1.0) -> float:
+    """
+    Calculate the angular velocity of the wave in circular membrane based on the modes n and m and the radius.
 
     Args:
-        n (int): _description_
-        m (int): _description_
-        radius (float, optional): _description_. Defaults to 1.0.
-        speed_of_sound (float, optional): _description_. Defaults to 1.0.
+        n (int): The n mode reflected as the n order of the first kind bessel function J_n
+        m (int): The m mode reflected as the m 'th zero of the J_n function, k_{n,m}
+        radius (float, optional): Radius of the circular membrane. Defaults to 1.0.
+        speed_of_sound (float, optional): The speed of sound (wave speed) in the membrane. Defaults to 1.0.
 
     Returns:
-        _type_: _description_
+        float: Returns the angular velocity, omega, in circular membrane.
     """
     k_nm = sps.jn_zeros(n,m)[m-1]
     return (k_nm / radius) * speed_of_sound
@@ -106,7 +105,8 @@ def circ_omega(n:int, m:int, radius=1.0, speed_of_sound=1.0):
 
 
 class Particles:
-    """Generate (points) particles from uniform distribution with random location on the membrane.
+    """
+    Generate (points) particles from uniform distribution with random location on the membrane.
     Deafult membrane is 'rect' type.
 
     Attributes
@@ -130,7 +130,8 @@ class Particles:
 
     """
     def __init__(self, amplitude=wave_amp, a=0, b=1, ttype='rect', num_points=10000, delta=0.05) -> None:
-        """Constructs all the necessary attributes for the Particles object.
+        """
+        Constructs all the necessary attributes for the Particles object.
 
         Args:
             amplitude (function, optional): A function that calculate the amplitude in the membrane.. Defaults to wave_amp.
@@ -159,7 +160,8 @@ class Particles:
     
     def step(self, **amplitude_params) -> None:
         """
-
+        Evolving all particle positions, dr, by generating a random direction angle from uniform distribution and multiply it by the normalized wave amplitude and constraining constant.
+        Keeping track on previous locations to generate smooth animation.
         """
         n_mode = amplitude_params['n']
         m_mode = amplitude_params['m']
