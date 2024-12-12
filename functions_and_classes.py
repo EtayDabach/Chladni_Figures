@@ -122,7 +122,7 @@ class Particles:
         For now its only works for SQUARE membranes (L_x=L_y).
     
     ttype : str
-        Type of the membrane as 'rect' or 'circ'.
+        Type of the membrane as 'rect', 'circ_sym' or 'circ_gen'.
     
     delta : float
         Control the size of the step for the particles.
@@ -147,13 +147,15 @@ class Particles:
         self.amplitude = amplitude
         self.type=ttype
         self.prev_points = 0
-        if self.type == 'circ':
+        if 'circ' in self.type:
+        # if self.type == 'circ':
             self.delta = delta/10
         else:
             self.delta = delta
 
-        # generate points based on the membrane shape
-        if self.type == 'circ':
+        # Generate points based on the membrane shape
+        if 'circ' in self.type:
+        # if self.type == 'circ':
             polar_r_points = np.random.uniform(0, 1.0, self.num_points)
             polar_angle_points = np.random.uniform(0, 2*np.pi,self.num_points)
             self.points = np.array([polar_r_points,polar_angle_points])
@@ -168,8 +170,10 @@ class Particles:
         """
         n_mode = amplitude_params['n']
         m_mode = amplitude_params['m']
-        # normalization for the step based on the membrane shape
-        if self.type == 'circ':
+
+        # Normalization for the step based on the membrane shape
+        if 'circ' in self.type:
+        # if self.type == 'circ':
             k_m1n = sps.jn_zeros(n_mode, m_mode)[m_mode-1]
             norm = 1/2 * (sps.jv(n_mode+1, k_m1n))**2
         else:
