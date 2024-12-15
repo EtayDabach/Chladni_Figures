@@ -60,6 +60,7 @@ class Membrane():
                 self.b = Lx/2
 
         elif 'circ' in self.type:
+            self.boundary = '0_onS'
             self.amplitude = wave_amp(x_vals=rjv, y_vals=thetajv, n=0, m=1, boundary='0_onS', mtype=self.type)
             self.a = 0 # for uniform distribution
             self.b = 2*np.pi
@@ -94,7 +95,7 @@ class Membrane():
 
 def main():
     # Initialize the membrane
-    membrane = Membrane(mtype='circ_sym', boundary='0_onS') # for mtype: 'rect', 'circ_sym' or 'circ_gen'.
+    membrane = Membrane(mtype='rect', boundary='Max_onS') # for mtype: 'rect', 'circ_sym' or 'circ_gen'.
     print(membrane.boundary)
     print(membrane.type)
 
@@ -107,7 +108,10 @@ def main():
             ensemble.step(L_x=Lx, L_y=Ly, n=n_mode, m=m_mode, boundary=membrane.boundary, mtype=membrane.type, abso='yes')
 
         points = ensemble.prev_points + (i%5)/5 * (ensemble.points - ensemble.prev_points)
-        membrane.dot.set_data(*points)
+        if 'circ' in membrane.type:
+            membrane.dot.set_data(points[1], points[0])
+        else:
+            membrane.dot.set_data(*points)
     
     # Create function for reset animation
     def create_particles():
@@ -133,7 +137,7 @@ def main():
     root.minsize(700, 700)
 
     create_particles() # initialize the particles
-    print(ensemble.points)
+    # print(ensemble.points)
 
     canvas = FigureCanvasTkAgg(membrane.fig, master=root)
     canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
@@ -158,7 +162,7 @@ def main():
     stop_button = tk.Button(frame, text="Stop Animation", command=stop_animation)
     stop_button.pack(side=tk.LEFT, padx=10)
 
-    reset_button = tk.Button(frame, text="Reset Animation", command=create_particles) # , command=create_particles
+    reset_button = tk.Button(frame, text="Reset Particles", command=create_particles) # , command=create_particles
     reset_button.pack(side=tk.LEFT, padx=10)
 
     # Run the Tkinter main loop

@@ -53,9 +53,9 @@ def wave_amp(x_vals:np.ndarray, y_vals:np.ndarray, n:int, m:int, L_x=1, L_y=1, b
 def time_evolution(omega:float, t:float) -> float:
     """
     Function for time evolution of the wave ,T(t), using the method of sepration of variables for both rectangular and circular membrane.
-    The full function contains sum of sine and cosine, but for in this function its only contains the sine (initial condition in t=0 is amplitude=0).
+    The full function contains sum of sine and cosine, but for this function its only contains the sine (initial condition in t=0 is amplitude=0).
 
-        T(t)=a_{n,m}*cos(omega_{n,m}t) + b_{n,m}*sin(omega_{n,m}t)
+        T(t)=a_{n,m}*cos(omega_{n,m}*t) + b_{n,m}*sin(omega_{n,m}*t) -> T(t) = sin(omega_{n,m}*t)
 
     Args:
         omega (float): The angular velocity 
@@ -128,7 +128,13 @@ class Particles:
         Control the size of the step for the particles.
     
     prev_points : ndarray or int
-        Previous position of the points
+        Previous position of the points.
+    
+    n_mode : int
+        The n mode in the membrane.
+    
+    m_mode : int
+        The m mode in the membrane.
 
     """
     def __init__(self, amplitude=wave_amp, a=0, b=1, ttype='rect', num_points=10000, delta=0.05) -> None:
@@ -145,21 +151,23 @@ class Particles:
         """
         self.num_points = num_points
         self.amplitude = amplitude
-        self.type=ttype
+        self.type = ttype
+
+        # Place holders
         self.prev_points = 0
-        if 'circ' in self.type:
-        # if self.type == 'circ':
-            self.delta = delta/10
-        else:
-            self.delta = delta
+        self.n_mode = 0
+        self.m_mode = 0
 
         # Generate points based on the membrane shape
         if 'circ' in self.type:
-        # if self.type == 'circ':
+            self.true_delta = delta
+            self.delta = self.true_delta / 20
             polar_r_points = np.random.uniform(0, 1.0, self.num_points)
-            polar_angle_points = np.random.uniform(0, 2*np.pi,self.num_points)
-            self.points = np.array([polar_r_points,polar_angle_points])
+            polar_angle_points = np.random.uniform(0, 2*np.pi, self.num_points)
+            self.points = np.array([polar_r_points, polar_angle_points])
+            # self.points = np.array([polar_angle_points, polar_r_points])
         else:
+            self.delta = delta
             self.points = np.random.uniform(a, b, size=(2, self.num_points))
 
     
@@ -168,14 +176,18 @@ class Particles:
         Evolving all particle positions, dr, by generating a random direction angle from uniform distribution and multiply it by the normalized wave amplitude and constraining constant.
         Keeping track on previous locations to generate smooth animation.
         """
-        n_mode = amplitude_params['n']
-        m_mode = amplitude_params['m']
+        self.n_mode = amplitude_params['n']
+        self.m_mode = amplitude_params['m']
 
         # Normalization for the step based on the membrane shape
         if 'circ' in self.type:
-        # if self.type == 'circ':
-            k_m1n = sps.jn_zeros(n_mode, m_mode)[m_mode-1]
-            norm = 1/2 * (sps.jv(n_mode+1, k_m1n))**2
+            k_m1n = sps.jn_zeros(self.n_mode, self.m_mode)[self.m_mode-1]
+            norm = 1/2 * (sps.jv(self.n_mode+1, k_m1n))**2
+            # To visualize better the animation between the modes
+            if 'sym' in self.type:
+                self.delta = self.true_delta / (5 * self.m_mode)
+            else:
+                self.delta = self.true_delta / (4 * max(self.n_mode, self.m_mode))
         else:
             norm = 2
 
