@@ -36,7 +36,7 @@ rjv, thetajv = np.meshgrid(rj, thetaj)
 
 
 
-# Initialize figure and axes based on membrane shape and animation type (plane or particles, but for now only particles)
+# Initialize figure and axes based on membrane shape and animation type (waves or particles, but for now only particles)
 class Membrane():
     """_summary_
     """
@@ -99,12 +99,6 @@ def main():
     root.title("Interactive Chladni Figures")
     root.minsize(900, 700)
 
-
-    # Initialize the membrane
-    membrane = Membrane(mtype='rect', boundary='Max_onS') # for mtype: 'rect', 'circ_sym' or 'circ_gen'.
-    # print(membrane.boundary)
-    # print(membrane.type)
-
     # Update function for the animation,
     def animate(i):
         global ensemble
@@ -119,22 +113,84 @@ def main():
         else:
             membrane.dot.set_data(*points)
     
+
     # Create function for reset animation
     def create_particles():
         global ensemble
         ensemble = Particles(amplitude=wave_amp, a=membrane.a, b=membrane.b, ttype=membrane.type, num_points=10000, delta=0.1)
     
+
     # Initialization function for start animation
     def start_animation():
         global ani
-        ani = animation.FuncAnimation(membrane.fig, animate, frames=200, interval=20, repeat=True)
+        ani = animation.FuncAnimation(membrane.fig, animate, frames=200, interval=30, repeat=True)
         canvas.draw_idle()  # ensure the canvas updates
+
 
     # Stop function for stop animation
     def stop_animation():
         global ani
         if 'ani' in globals():
             ani.event_source.stop()  # stop the animation
+    
+
+    # Radiobuttons functions
+    waves_or_particles = 'particles'
+    rect_or_circ = 'rect'
+    zero_or_max_onS = '0_onS'
+
+
+    # Select animation function
+    def select_animation():
+        global waves_or_particles
+        if animation_var.get() == 1:
+            waves_or_particles = 'particles'
+        elif animation_var.get() == 2:
+            waves_or_particles = 'waves'
+        # initiate_membrane()
+    
+
+    # Select membrane shape
+    def select_shape():
+        global rect_or_circ
+        if shape_var.get() == 1:
+            rect_or_circ = 'rect'
+        elif shape_var.get() == 2:
+            rect_or_circ = 'circ_sym'
+        elif shape_var.get() == 3:
+            rect_or_circ = 'circ_gen'
+        initiate_membrane()
+        # canvas.draw_idle()
+    
+
+    # Select boundary condition
+    def select_boundary():
+        global zero_or_max_onS
+        if boundary_var.get() == 1:
+            zero_or_max_onS = '0_onS'
+        elif boundary_var.get() == 2:
+            zero_or_max_onS = 'Max_onS'
+        initiate_membrane()
+        # canvas.draw_idle()
+
+    
+    # Initialize the membrane
+    def initiate_membrane():
+        global membrane ; rect_or_circ ; zero_or_max_onS
+        stop_animation()
+        membrane = Membrane(mtype=rect_or_circ, boundary=zero_or_max_onS) # for mtype: 'rect', 'circ_sym' or 'circ_gen'.
+        # if 'canvas' in globals():
+        #     # initiate_canves()
+        #     start_animation()
+
+
+    # Initialize canvas
+    def initiate_canves():
+        # Main window
+        global canvas
+        canvas = FigureCanvasTkAgg(membrane.fig, master=frame)
+        canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+        
 
     # Control panels
     frame = tk.Frame(root)
@@ -146,11 +202,16 @@ def main():
     bottom_frame = tk.Frame(root)
     bottom_frame.pack(side=tk.BOTTOM, fill=tk.X)
 
+    # Initialize objects
+    initiate_membrane() # initialize the membrane
     create_particles() # initialize the particles
+    # print(globals().keys())
 
     # Main window
-    canvas = FigureCanvasTkAgg(membrane.fig, master=frame)
-    canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+    # global canvas
+    # canvas = FigureCanvasTkAgg(membrane.fig, master=frame)
+    # canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+    initiate_canves()
 
 
     # Sliders for n and m
@@ -180,44 +241,44 @@ def main():
     # Create radiobuttons for mulitple options for particle/plane, rectangular/circular, 0_onS/Max_onS
 
     # Radiobuttons for particle/plane
-    animation_var = tk.IntVar(master=right_frame)
+    animation_var = tk.IntVar(master=right_frame, value=1)
 
     animation_label = tk.Label(master=right_frame, text='Animation:')
     animation_label.pack(fill=tk.X, padx=10, pady=(100, 0))
 
-    particle_option = tk.Radiobutton(master=right_frame, text='Particles', variable=animation_var, value=1, indicator=0, background="light blue")
+    particle_option = tk.Radiobutton(master=right_frame, text='Particles', variable=animation_var, value=1, indicator=0, background="light blue", command=select_animation)
     particle_option.pack(fill=tk.X, padx=10, pady=(10, 5))
 
-    plane_option = tk.Radiobutton(master=right_frame, text='Plane', variable=animation_var, value=2, indicator=0, background="light blue")
-    plane_option.pack(fill=tk.X, padx=10, pady=(10))
+    waves_option = tk.Radiobutton(master=right_frame, text='Waves', variable=animation_var, value=2, indicator=0, background="light blue", command=select_animation)
+    waves_option.pack(fill=tk.X, padx=10, pady=(10))
 
 
     # Radiobuttons for rectangular/circular(sym or gen) membrane shape
-    shape_var = tk.IntVar(master=right_frame)
+    shape_var = tk.IntVar(master=right_frame, value=1)
 
     shape_label = tk.Label(master=right_frame, text='Shape:')
     shape_label.pack(fill=tk.X, padx=10, pady=(50, 0))
 
-    rectangular_option = tk.Radiobutton(master=right_frame, text='rect', variable=shape_var, value=1, indicator=0, background="light blue")
+    rectangular_option = tk.Radiobutton(master=right_frame, text='rect', variable=shape_var, value=1, indicator=0, background="light blue", command=select_shape)
     rectangular_option.pack(fill=tk.X, padx=10, pady=(10, 5))
 
-    circular_sym_option = tk.Radiobutton(master=right_frame, text='circ_sym', variable=shape_var, value=2, indicator=0, background="light blue")
+    circular_sym_option = tk.Radiobutton(master=right_frame, text='circ_sym', variable=shape_var, value=2, indicator=0, background="light blue", command=select_shape)
     circular_sym_option.pack(fill=tk.X, padx=10, pady=(10, 5))
 
-    circular_gen_option = tk.Radiobutton(master=right_frame, text='circ_gen', variable=shape_var, value=3, indicator=0, background="light blue")
+    circular_gen_option = tk.Radiobutton(master=right_frame, text='circ_gen', variable=shape_var, value=3, indicator=0, background="light blue", command=select_shape)
     circular_gen_option.pack(fill=tk.X, padx=10, pady=(10))
 
 
     # Radiobuttons for 0_onS/Max_onS boundary condition
-    boundary_var = tk.IntVar(master=right_frame)
+    boundary_var = tk.IntVar(master=right_frame, value=1)
 
     boundary_label = tk.Label(master=right_frame, text='Boundary:')
     boundary_label.pack(fill=tk.X, padx=10, pady=(50, 0))
 
-    zero_onS_option = tk.Radiobutton(master=right_frame, text='0_onS', variable=boundary_var, value=1, indicator=0, background="light blue")
+    zero_onS_option = tk.Radiobutton(master=right_frame, text='0_onS', variable=boundary_var, value=1, indicator=0, background="light blue", command=select_boundary)
     zero_onS_option.pack(fill=tk.X, padx=10, pady=(10, 5))
 
-    Max_onS_option = tk.Radiobutton(master=right_frame, text='Max_onS', variable=boundary_var, value=2, indicator=0, background="light blue")
+    Max_onS_option = tk.Radiobutton(master=right_frame, text='Max_onS', variable=boundary_var, value=2, indicator=0, background="light blue", command=select_boundary)
     Max_onS_option.pack(fill=tk.X, padx=10, pady=(10))
 
 
