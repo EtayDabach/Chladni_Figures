@@ -94,10 +94,16 @@ class Membrane():
 
 
 def main():
+    # Tkinter GUI setup
+    root = tk.Tk()
+    root.title("Interactive Chladni Figures")
+    root.minsize(900, 700)
+
+
     # Initialize the membrane
     membrane = Membrane(mtype='rect', boundary='Max_onS') # for mtype: 'rect', 'circ_sym' or 'circ_gen'.
-    print(membrane.boundary)
-    print(membrane.type)
+    # print(membrane.boundary)
+    # print(membrane.type)
 
     # Update function for the animation,
     def animate(i):
@@ -130,40 +136,90 @@ def main():
         if 'ani' in globals():
             ani.event_source.stop()  # stop the animation
 
+    # Control panels
+    frame = tk.Frame(root)
+    frame.pack(fill=tk.BOTH, expand=1)
 
-    # Tkinter GUI setup
-    root = tk.Tk()
-    root.title("Interactive Chladni Figures")
-    root.minsize(700, 700)
+    right_frame = tk.Frame(frame)
+    right_frame.pack(side=tk.RIGHT, fill=tk.Y)
+    
+    bottom_frame = tk.Frame(root)
+    bottom_frame.pack(side=tk.BOTTOM, fill=tk.X)
 
     create_particles() # initialize the particles
-    # print(ensemble.points)
 
-    canvas = FigureCanvasTkAgg(membrane.fig, master=root)
+    # Main window
+    canvas = FigureCanvasTkAgg(membrane.fig, master=frame)
     canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
-    # Control panel
-    frame = tk.Frame(root)
-    frame.pack(side=tk.BOTTOM)
 
     # Sliders for n and m
-    slider_n = tk.Scale(frame, from_=1, to=15, resolution=membrane.resolution, label="n", orient="horizontal")
+    label_n = tk.Label(bottom_frame, text='n : ')
+    label_n.pack(side=tk.LEFT, padx=(100, 0))
+    slider_n = tk.Scale(bottom_frame, from_=1, to=15, resolution=membrane.resolution, orient="horizontal")
     slider_n.set(1)
-    slider_n.pack(side=tk.LEFT, padx=10)
+    slider_n.pack(side=tk.LEFT, padx=(5, 10))
 
-    slider_m = tk.Scale(frame, from_=1, to=15, resolution=membrane.resolution, label="m", orient="horizontal")
+    label_m = tk.Label(bottom_frame, text='m : ')
+    label_m.pack(side=tk.LEFT, padx=(10, 0))
+    slider_m = tk.Scale(bottom_frame, from_=1, to=15, resolution=membrane.resolution, orient="horizontal")
     slider_m.set(3)
-    slider_m.pack(side=tk.LEFT, padx=10)
+    slider_m.pack(side=tk.LEFT, padx=(5, 10))
 
     # Buttons for start, stop and reset animation
-    start_button = tk.Button(frame, text="Start Animation", command=start_animation)
+    start_button = tk.Button(bottom_frame, text="Start Animation", command=start_animation)
     start_button.pack(side=tk.LEFT, padx=10)
 
-    stop_button = tk.Button(frame, text="Stop Animation", command=stop_animation)
+    stop_button = tk.Button(bottom_frame, text="Stop Animation", command=stop_animation)
     stop_button.pack(side=tk.LEFT, padx=10)
 
-    reset_button = tk.Button(frame, text="Reset Particles", command=create_particles) # , command=create_particles
+    reset_button = tk.Button(bottom_frame, text="Reset Particles", command=create_particles) # , command=create_particles
     reset_button.pack(side=tk.LEFT, padx=10)
+
+
+    # Create radiobuttons for mulitple options for particle/plane, rectangular/circular, 0_onS/Max_onS
+
+    # Radiobuttons for particle/plane
+    animation_var = tk.IntVar(master=right_frame)
+
+    animation_label = tk.Label(master=right_frame, text='Animation:')
+    animation_label.pack(fill=tk.X, padx=10, pady=(100, 0))
+
+    particle_option = tk.Radiobutton(master=right_frame, text='Particles', variable=animation_var, value=1, indicator=0, background="light blue")
+    particle_option.pack(fill=tk.X, padx=10, pady=(10, 5))
+
+    plane_option = tk.Radiobutton(master=right_frame, text='Plane', variable=animation_var, value=2, indicator=0, background="light blue")
+    plane_option.pack(fill=tk.X, padx=10, pady=(10))
+
+
+    # Radiobuttons for rectangular/circular(sym or gen) membrane shape
+    shape_var = tk.IntVar(master=right_frame)
+
+    shape_label = tk.Label(master=right_frame, text='Shape:')
+    shape_label.pack(fill=tk.X, padx=10, pady=(50, 0))
+
+    rectangular_option = tk.Radiobutton(master=right_frame, text='rect', variable=shape_var, value=1, indicator=0, background="light blue")
+    rectangular_option.pack(fill=tk.X, padx=10, pady=(10, 5))
+
+    circular_sym_option = tk.Radiobutton(master=right_frame, text='circ_sym', variable=shape_var, value=2, indicator=0, background="light blue")
+    circular_sym_option.pack(fill=tk.X, padx=10, pady=(10, 5))
+
+    circular_gen_option = tk.Radiobutton(master=right_frame, text='circ_gen', variable=shape_var, value=3, indicator=0, background="light blue")
+    circular_gen_option.pack(fill=tk.X, padx=10, pady=(10))
+
+
+    # Radiobuttons for 0_onS/Max_onS boundary condition
+    boundary_var = tk.IntVar(master=right_frame)
+
+    boundary_label = tk.Label(master=right_frame, text='Boundary:')
+    boundary_label.pack(fill=tk.X, padx=10, pady=(50, 0))
+
+    zero_onS_option = tk.Radiobutton(master=right_frame, text='0_onS', variable=boundary_var, value=1, indicator=0, background="light blue")
+    zero_onS_option.pack(fill=tk.X, padx=10, pady=(10, 5))
+
+    Max_onS_option = tk.Radiobutton(master=right_frame, text='Max_onS', variable=boundary_var, value=2, indicator=0, background="light blue")
+    Max_onS_option.pack(fill=tk.X, padx=10, pady=(10))
+
 
     # Run the Tkinter main loop
     root.mainloop()
