@@ -117,7 +117,8 @@ def main():
     # Create function for reset animation
     def create_particles():
         global ensemble
-        ensemble = Particles(amplitude=wave_amp, a=membrane.a, b=membrane.b, ttype=membrane.type, num_points=10000, delta=0.1)
+        if 'membrane' in globals():
+            ensemble = Particles(amplitude=wave_amp, a=membrane.a, b=membrane.b, ttype=membrane.type, num_points=10000, delta=0.1)
     
 
     # Initialization function for start animation
@@ -147,6 +148,7 @@ def main():
             waves_or_particles = 'particles'
         elif animation_var.get() == 2:
             waves_or_particles = 'waves'
+        # print(f'')
         # initiate_membrane()
     
 
@@ -157,9 +159,14 @@ def main():
             rect_or_circ = 'rect'
         elif shape_var.get() == 2:
             rect_or_circ = 'circ_sym'
+            boundary_var.set(1)
         elif shape_var.get() == 3:
             rect_or_circ = 'circ_gen'
-        initiate_membrane()
+            boundary_var.set(1)
+        slider_n.set(1)
+        slider_m.set(3)
+        initiate_membrane(rect_or_circ, zero_or_max_onS)
+        print(f'shape radiobutton: {rect_or_circ}, membrane shape: {membrane.type}')
         # canvas.draw_idle()
     
 
@@ -170,26 +177,33 @@ def main():
             zero_or_max_onS = '0_onS'
         elif boundary_var.get() == 2:
             zero_or_max_onS = 'Max_onS'
-        initiate_membrane()
+            shape_var.set(1)
+        slider_n.set(1)
+        slider_m.set(3)
+        initiate_membrane(rect_or_circ, zero_or_max_onS)
+        print(f'boundary radiobutton: {zero_or_max_onS}, membrane boundary: {membrane.boundary}')
         # canvas.draw_idle()
 
     
     # Initialize the membrane
-    def initiate_membrane():
-        global membrane ; rect_or_circ ; zero_or_max_onS
-        stop_animation()
+    def initiate_membrane(rect_or_circ, zero_or_max_onS):
+        global membrane
+        stop_animation() 
         membrane = Membrane(mtype=rect_or_circ, boundary=zero_or_max_onS) # for mtype: 'rect', 'circ_sym' or 'circ_gen'.
-        # if 'canvas' in globals():
-        #     # initiate_canves()
-        #     start_animation()
-
+        create_particles() # initialize the particles
+        if 'canvas' in globals(): 
+            canvas.get_tk_widget().pack_forget() 
+            initiate_canves()
+            # start_animation()
+        
 
     # Initialize canvas
     def initiate_canves():
         # Main window
         global canvas
-        canvas = FigureCanvasTkAgg(membrane.fig, master=frame)
-        canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+        if 'membrane' in globals():
+            canvas = FigureCanvasTkAgg(membrane.fig, master=frame)
+            canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
         
 
     # Control panels
@@ -203,8 +217,8 @@ def main():
     bottom_frame.pack(side=tk.BOTTOM, fill=tk.X)
 
     # Initialize objects
-    initiate_membrane() # initialize the membrane
-    create_particles() # initialize the particles
+    initiate_membrane(rect_or_circ, zero_or_max_onS) # initialize the membrane
+    # create_particles() # initialize the particles
     # print(globals().keys())
 
     # Main window
