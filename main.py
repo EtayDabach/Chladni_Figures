@@ -19,19 +19,19 @@ Ly = 1
 radius = 1
 
 # Grid for rectangle membrane with boundary condition 0_onS
-x0 = np.linspace(0, Lx, 1000)
-y0 = np.linspace(0, Ly, 1000)
+x0 = np.linspace(0, Lx, 250)
+y0 = np.linspace(0, Ly, 250)
 xv0, yv0 = np.meshgrid(x0, y0)
 
 # Grid for rectangle membrane with boundary condition Max_onS
-x = np.linspace(-Lx/2, Ly/2, 1000)
-y = np.linspace(-Lx/2, Ly/2, 1000)
+x = np.linspace(-Lx/2, Ly/2, 250)
+y = np.linspace(-Lx/2, Ly/2, 250)
 xv, yv = np.meshgrid(x, y) 
 
 
 # Grid for circular membrane (symmetric and general) with boundary condition 0_onS
-rj = np.linspace(0, radius, 1000) # radius=1
-thetaj= np.linspace(0, 2*np.pi, 1000)
+rj = np.linspace(0, radius, 250) # radius=1
+thetaj= np.linspace(0, 2*np.pi, 250)
 rjv, thetajv = np.meshgrid(rj, thetaj)
 
 
@@ -40,55 +40,102 @@ rjv, thetajv = np.meshgrid(rj, thetaj)
 class Membrane():
     """_summary_
     """
-    def __init__(self, mtype:str, boundary='0_onS') -> None:
+    def __init__(self, mtype='rect', boundary='0_onS', atype='particles') -> None:
         self.type = mtype
         self.boundary = boundary
+        self.animation_type = atype
         self.resolution = 1 # for slider intervals
         self.a = 0 # for uniform distribution
         self.b = 1
+        
 
         # Setting initial amplitude in the membrane
-        if self.type == 'rect':
-            if self.boundary == '0_onS':
-                self.amplitude = wave_amp(x_vals=xv0, y_vals=yv0, n=0, m=0, L_x=Lx, L_y=Ly, boundary=self.boundary, mtype=self.type)
-                self.a = 0 # for uniform distribution
-                self.b = Lx
-            else:
-                self.amplitude = wave_amp(x_vals=xv, y_vals=yv, n=0, m=0, L_x=Lx, L_y=Ly, boundary=self.boundary, mtype=self.type)
-                self.resolution = 2 # for slider intervals to get only odd numbers
-                self.a = -Lx/2 # for uniform distribution
-                self.b = Lx/2
-
-        elif 'circ' in self.type:
-            self.boundary = '0_onS'
-            self.amplitude = wave_amp(x_vals=rjv, y_vals=thetajv, n=0, m=1, boundary='0_onS', mtype=self.type)
-            self.a = 0 # for uniform distribution
-            self.b = 2*np.pi
-        else:
-            print("Please select one of the following options: 'rect', 'circ_sym' or 'circ_gen'.")
-            self.amplitude = 0
-
-        self.shape_for_particles()
-
-    def shape_for_particles(self) -> None:
-        # Setting the initial parameters for
         if self.type == 'rect':
             self.fig, self.ax = plt.subplots(figsize=(8,6))
             if self.boundary == '0_onS':
                 self.ax.set_xlim(0, Lx)
                 self.ax.set_ylim(0, Ly)
-            elif self.boundary == 'Max_onS': # only odd modes for true resulst
+                self.x = xv0
+                self.y = yv0
+                self.amplitude = wave_amp(x_vals=self.x, y_vals=self.y, n=1, m=3, L_x=Lx, L_y=Ly, boundary=self.boundary, mtype=self.type, abso='no') # for waves animation
+                self.a = 0 # for uniform distribution
+                self.b = Lx
+                self.omega = rect_omega(n=1, m=3, L_x=Lx, L_y=Ly, speed_of_sound=0.75)
+            else:
                 self.ax.set_xlim(-Lx/2, Lx/2)
                 self.ax.set_ylim(-Ly/2, Ly/2)
+                self.x = xv
+                self.y = yv
+                self.amplitude = wave_amp(x_vals=self.x, y_vals=self.y, n=1, m=3, L_x=Lx, L_y=Ly, boundary=self.boundary, mtype=self.type, abso='no') # for waves animation
+                self.resolution = 2 # for slider intervals to get only odd numbers
+                self.a = -Lx/2 # for uniform distribution
+                self.b = Lx/2
+                self.omega = rect_omega(n=1, m=3, L_x=Lx, L_y=Ly, speed_of_sound=0.75)
+
 
         elif 'circ' in self.type:
             self.fig, self.ax = plt.subplots(subplot_kw={'projection':'polar'}, figsize=(8,6))
             self.ax.set_ylim(0, radius + 0.05) # radius value + 0.05 for better visualization
+            self.x = rjv
+            self.y = thetajv
+            self.boundary = '0_onS'
+            self.amplitude = wave_amp(x_vals=self.x, y_vals=self.y, n=1, m=3, boundary='0_onS', mtype=self.type, abso='no') # for waves animation
+            self.a = 0 # for uniform distribution
+            self.b = 2*np.pi
+            self.omega = circ_omega(n=1, m=3, radius=radius, speed_of_sound=0.75)
+        else:
+            print("Please select one of the following options: 'rect', 'circ_sym' or 'circ_gen'.")
+            self.amplitude = 0
+
+        # Remove grid and ticks
+        self.ax.axes.get_xaxis().set_visible(False)
+        self.ax.axes.get_yaxis().set_visible(False)
+
+        # Setting plot based on animation type
+        if self.animation_type == 'particles':
+            self.plot_for_particles()
+        elif self.animation_type == 'waves':
+            self.plot_for_waves()
+
+
+    def plot_for_particles(self) -> None:
+        # # Setting the initial parameters for
+        # if self.type == 'rect':
+        #     self.fig, self.ax = plt.subplots(figsize=(8,6))
+        #     if self.boundary == '0_onS':
+        #         self.ax.set_xlim(0, Lx)
+        #         self.ax.set_ylim(0, Ly)
+        #     elif self.boundary == 'Max_onS': # only odd modes for true resulst
+        #         self.ax.set_xlim(-Lx/2, Lx/2)
+        #         self.ax.set_ylim(-Ly/2, Ly/2)
+
+        # elif 'circ' in self.type:
+        #     self.fig, self.ax = plt.subplots(subplot_kw={'projection':'polar'}, figsize=(8,6))
+        #     self.ax.set_ylim(0, radius + 0.05) # radius value + 0.05 for better visualization
 
         self.dot, = plt.plot([],[], 'o', ms=2, color='#cbbd93') # sand color #cbbd93
         self.ax.set_facecolor('dimgrey')    
-        self.ax.axes.get_xaxis().set_visible(False)
-        self.ax.axes.get_yaxis().set_visible(False)
+        # self.ax.axes.get_xaxis().set_visible(False)
+        # self.ax.axes.get_yaxis().set_visible(False)
+    
+
+    def plot_for_waves(self) -> None:
+        # self.fig.set_size_inches(10,8)
+        self.ax.axis('off')
+        self.update_wave_ax(self.amplitude)
+        im = self.ax.imshow(self.amplitude)
+        self.fig.colorbar(mappable=im, ax=self.ax)
+    
+
+    def update_wave_ax(self, amplitude) -> None:
+        self.ax.clear()
+        if 'circ' in self.type:
+            self.ax.pcolormesh(self.y, self.x, amplitude)
+        else:
+            self.ax.pcolormesh(self.x, self.y, amplitude)
+
+        
+
 
 
 
@@ -99,22 +146,38 @@ def main():
     root.title("Interactive Chladni Figures")
     root.minsize(900, 700)
 
+    waves_or_particles = 'particles'
+    rect_or_circ = 'rect'
+    zero_or_max_onS = '0_onS'
+
+
     # Update function for the animation,
     def animate(i):
-        global ensemble
+        global ensemble ; waves_or_particles
         n_mode = slider_n.get()
         m_mode = slider_m.get()
-        if i%5 == 0:
-            ensemble.step(L_x=Lx, L_y=Ly, n=n_mode, m=m_mode, boundary=membrane.boundary, mtype=membrane.type, abso='yes')
+        if 'membrane' in globals():
+            if waves_or_particles == 'particles':
+                if i%5 == 0:
+                    ensemble.step(L_x=Lx, L_y=Ly, n=n_mode, m=m_mode, boundary=membrane.boundary, mtype=membrane.type, abso='yes')
 
-        points = ensemble.prev_points + (i%5)/5 * (ensemble.points - ensemble.prev_points)
-        if 'circ' in membrane.type:
-            membrane.dot.set_data(points[1], points[0])
-        else:
-            membrane.dot.set_data(*points)
+                points = ensemble.prev_points + (i%5)/5 * (ensemble.points - ensemble.prev_points)
+                if 'circ' in membrane.type:
+                    membrane.dot.set_data(points[1], points[0])
+                else:
+                    membrane.dot.set_data(*points)
+            elif waves_or_particles == 'waves':
+                if membrane.type == 'rect':
+                    omega = rect_omega(n=n_mode, m=m_mode, L_x=Lx, L_y=Ly, speed_of_sound=0.5)
+                elif 'circ' in membrane.type:
+                    omega = circ_omega(n=n_mode, m=m_mode, radius=radius, speed_of_sound=0.5)
+                amplitude = wave_amp(x_vals=membrane.x, y_vals=membrane.y, n=n_mode, m=m_mode, L_x=Lx, L_y=Ly, 
+                                     boundary=membrane.boundary, mtype=membrane.type, abso='no') * time_evolution(omega=omega, t=i / 10)
+                membrane.update_wave_ax(amplitude=amplitude)
+                
     
 
-    # Create function for reset animation
+    # Create function for reset particle animation
     def create_particles():
         global ensemble
         if 'membrane' in globals():
@@ -136,10 +199,10 @@ def main():
     
 
     # Radiobuttons functions
-    waves_or_particles = 'particles'
-    rect_or_circ = 'rect'
-    zero_or_max_onS = '0_onS'
-
+    def test_changes(rect_or_circ, zero_or_max_onS, waves_or_particles):
+        print(f'\nanimation radiobutton: {waves_or_particles}, membrane animation: {membrane.animation_type}')
+        print(f'shape radiobutton: {rect_or_circ}, membrane shape: {membrane.type}')
+        print(f'boundary radiobutton: {zero_or_max_onS}, membrane boundary: {membrane.boundary}')
 
     # Select animation function
     def select_animation():
@@ -148,13 +211,14 @@ def main():
             waves_or_particles = 'particles'
         elif animation_var.get() == 2:
             waves_or_particles = 'waves'
-        # print(f'')
-        # initiate_membrane()
+        initiate_membrane(rect_or_circ, zero_or_max_onS, waves_or_particles)
+        # print(f'animation radiobutton: {waves_or_particles}, membrane animation: {membrane.animation_type}')
+        test_changes(rect_or_circ, zero_or_max_onS, waves_or_particles)
     
 
     # Select membrane shape
     def select_shape():
-        global rect_or_circ
+        global rect_or_circ 
         if shape_var.get() == 1:
             rect_or_circ = 'rect'
         elif shape_var.get() == 2:
@@ -165,9 +229,10 @@ def main():
             boundary_var.set(1)
         slider_n.set(1)
         slider_m.set(3)
-        initiate_membrane(rect_or_circ, zero_or_max_onS)
-        print(f'shape radiobutton: {rect_or_circ}, membrane shape: {membrane.type}')
-        # canvas.draw_idle()
+        initiate_membrane(rect_or_circ, zero_or_max_onS, waves_or_particles)
+        # print(f'shape radiobutton: {rect_or_circ}, membrane shape: {membrane.type}')
+        test_changes(rect_or_circ, zero_or_max_onS, waves_or_particles)
+
     
 
     # Select boundary condition
@@ -175,21 +240,28 @@ def main():
         global zero_or_max_onS
         if boundary_var.get() == 1:
             zero_or_max_onS = '0_onS'
+            slider_n.set(1)
+            slider_m.set(3)
+            slider_n.config(resolution=1)
+            slider_m.config(resolution=1)
         elif boundary_var.get() == 2:
             zero_or_max_onS = 'Max_onS'
             shape_var.set(1)
-        slider_n.set(1)
-        slider_m.set(3)
-        initiate_membrane(rect_or_circ, zero_or_max_onS)
-        print(f'boundary radiobutton: {zero_or_max_onS}, membrane boundary: {membrane.boundary}')
-        # canvas.draw_idle()
+            slider_n.set(1)
+            slider_m.set(3)
+            slider_n.config(resolution=2)
+            slider_m.config(resolution=2)
+        
+        initiate_membrane(rect_or_circ, zero_or_max_onS, waves_or_particles)
+        # print(f'boundary radiobutton: {zero_or_max_onS}, membrane boundary: {membrane.boundary}')
+        test_changes(rect_or_circ, zero_or_max_onS, waves_or_particles)
 
     
     # Initialize the membrane
-    def initiate_membrane(rect_or_circ, zero_or_max_onS):
+    def initiate_membrane(rect_or_circ, zero_or_max_onS, waves_or_particles):
         global membrane
         stop_animation() 
-        membrane = Membrane(mtype=rect_or_circ, boundary=zero_or_max_onS) # for mtype: 'rect', 'circ_sym' or 'circ_gen'.
+        membrane = Membrane(mtype=rect_or_circ, boundary=zero_or_max_onS, atype=waves_or_particles) # for mtype: 'rect', 'circ_sym' or 'circ_gen'. for atype: 'particles' or 'waves'.
         create_particles() # initialize the particles
         if 'canvas' in globals(): 
             canvas.get_tk_widget().pack_forget() 
@@ -217,7 +289,7 @@ def main():
     bottom_frame.pack(side=tk.BOTTOM, fill=tk.X)
 
     # Initialize objects
-    initiate_membrane(rect_or_circ, zero_or_max_onS) # initialize the membrane
+    initiate_membrane(rect_or_circ, zero_or_max_onS, waves_or_particles) # initialize the membrane
     # create_particles() # initialize the particles
     # print(globals().keys())
 

@@ -157,10 +157,10 @@ class Particles:
         self.prev_points = 0
         self.n_mode = 0
         self.m_mode = 0
+        self.true_delta = delta
 
         # Generate points based on the membrane shape
-        if 'circ' in self.type:
-            self.true_delta = delta
+        if 'circ' in self.type:    
             self.delta = self.true_delta / 20
             polar_r_points = np.random.uniform(0, 1.0, self.num_points)
             polar_angle_points = np.random.uniform(0, 2*np.pi, self.num_points)
