@@ -87,7 +87,7 @@ class Membrane():
             print("Please select one of the following options: 'rect', 'circ_sym' or 'circ_gen'.")
             self.amplitude = 0
 
-        # Remove grid and ticks
+        # Set ticks to be invisible
         self.ax.axes.get_xaxis().set_visible(False)
         self.ax.axes.get_yaxis().set_visible(False)
 
@@ -146,14 +146,17 @@ def main():
     root.title("Interactive Chladni Figures")
     root.minsize(900, 700)
 
-    waves_or_particles = 'particles'
-    rect_or_circ = 'rect'
-    zero_or_max_onS = '0_onS'
+    def set_global_variables():
+        global waves_or_particles, rect_or_circ, zero_or_max_onS
+        waves_or_particles = 'particles'
+        rect_or_circ = 'rect'
+        zero_or_max_onS = '0_onS'
 
+    set_global_variables()
 
     # Update function for the animation,
     def animate(i):
-        global ensemble ; waves_or_particles
+        global ensemble, waves_or_particles
         n_mode = slider_n.get()
         m_mode = slider_m.get()
         if 'membrane' in globals():
@@ -175,7 +178,6 @@ def main():
                                      boundary=membrane.boundary, mtype=membrane.type, abso='no') * time_evolution(omega=omega, t=i / 10)
                 membrane.update_wave_ax(amplitude=amplitude)
                 
-    
 
     # Create function for reset particle animation
     def create_particles():
@@ -199,45 +201,56 @@ def main():
     
 
     # Radiobuttons functions
+    # Check the values for animation type, shape and boundary. It should be the same for the membrane attributes and global variables.
     def test_changes(rect_or_circ, zero_or_max_onS, waves_or_particles):
         print(f'\nanimation radiobutton: {waves_or_particles}, membrane animation: {membrane.animation_type}')
         print(f'shape radiobutton: {rect_or_circ}, membrane shape: {membrane.type}')
         print(f'boundary radiobutton: {zero_or_max_onS}, membrane boundary: {membrane.boundary}')
 
+
     # Select animation function
     def select_animation():
-        global waves_or_particles
+        # global waves_or_particles
+        global waves_or_particles, rect_or_circ, zero_or_max_onS
         if animation_var.get() == 1:
             waves_or_particles = 'particles'
         elif animation_var.get() == 2:
             waves_or_particles = 'waves'
+        # shape_var.set(1)
+        # boundary_var.set(1)
         initiate_membrane(rect_or_circ, zero_or_max_onS, waves_or_particles)
         # print(f'animation radiobutton: {waves_or_particles}, membrane animation: {membrane.animation_type}')
         test_changes(rect_or_circ, zero_or_max_onS, waves_or_particles)
+        # return waves_or_particles
     
 
     # Select membrane shape
     def select_shape():
-        global rect_or_circ 
+        # global rect_or_circ
+        global waves_or_particles, rect_or_circ, zero_or_max_onS
         if shape_var.get() == 1:
             rect_or_circ = 'rect'
         elif shape_var.get() == 2:
             rect_or_circ = 'circ_sym'
             boundary_var.set(1)
+            select_boundary()
         elif shape_var.get() == 3:
             rect_or_circ = 'circ_gen'
             boundary_var.set(1)
+            select_boundary()
         slider_n.set(1)
         slider_m.set(3)
         initiate_membrane(rect_or_circ, zero_or_max_onS, waves_or_particles)
         # print(f'shape radiobutton: {rect_or_circ}, membrane shape: {membrane.type}')
         test_changes(rect_or_circ, zero_or_max_onS, waves_or_particles)
+        # return rect_or_circ
 
     
 
     # Select boundary condition
     def select_boundary():
-        global zero_or_max_onS
+        # global zero_or_max_onS
+        global waves_or_particles, rect_or_circ, zero_or_max_onS
         if boundary_var.get() == 1:
             zero_or_max_onS = '0_onS'
             slider_n.set(1)
@@ -247,14 +260,15 @@ def main():
         elif boundary_var.get() == 2:
             zero_or_max_onS = 'Max_onS'
             shape_var.set(1)
+            select_shape()
             slider_n.set(1)
             slider_m.set(3)
             slider_n.config(resolution=2)
             slider_m.config(resolution=2)
-        
         initiate_membrane(rect_or_circ, zero_or_max_onS, waves_or_particles)
         # print(f'boundary radiobutton: {zero_or_max_onS}, membrane boundary: {membrane.boundary}')
         test_changes(rect_or_circ, zero_or_max_onS, waves_or_particles)
+        # return zero_or_max_onS
 
     
     # Initialize the membrane
@@ -266,7 +280,6 @@ def main():
         if 'canvas' in globals(): 
             canvas.get_tk_widget().pack_forget() 
             initiate_canves()
-            # start_animation()
         
 
     # Initialize canvas
