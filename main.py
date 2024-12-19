@@ -60,7 +60,7 @@ class Membrane():
                 self.amplitude = wave_amp(x_vals=self.x, y_vals=self.y, n=1, m=3, L_x=Lx, L_y=Ly, boundary=self.boundary, mtype=self.type, abso='no') # for waves animation
                 self.a = 0 # for uniform distribution
                 self.b = Lx
-                self.omega = rect_omega(n=1, m=3, L_x=Lx, L_y=Ly, speed_of_sound=0.75)
+                self.omega = rect_omega(n=1, m=3, L_x=Lx, L_y=Ly, wave_speed=0.75)
             else:
                 self.ax.set_xlim(-Lx/2, Lx/2)
                 self.ax.set_ylim(-Ly/2, Ly/2)
@@ -70,7 +70,7 @@ class Membrane():
                 self.resolution = 2 # for slider intervals to get only odd numbers
                 self.a = -Lx/2 # for uniform distribution
                 self.b = Lx/2
-                self.omega = rect_omega(n=1, m=3, L_x=Lx, L_y=Ly, speed_of_sound=0.75)
+                self.omega = rect_omega(n=1, m=3, L_x=Lx, L_y=Ly, wave_speed=0.75)
 
 
         elif 'circ' in self.type:
@@ -82,7 +82,7 @@ class Membrane():
             self.amplitude = wave_amp(x_vals=self.x, y_vals=self.y, n=1, m=3, boundary='0_onS', mtype=self.type, abso='no') # for waves animation
             self.a = 0 # for uniform distribution
             self.b = 2*np.pi
-            self.omega = circ_omega(n=1, m=3, radius=radius, speed_of_sound=0.75)
+            self.omega = circ_omega(n=1, m=3, radius=radius, wave_speed=0.75)
         else:
             print("Please select one of the following options: 'rect', 'circ_sym' or 'circ_gen'.")
             self.amplitude = 0
@@ -99,24 +99,8 @@ class Membrane():
 
 
     def plot_for_particles(self) -> None:
-        # # Setting the initial parameters for
-        # if self.type == 'rect':
-        #     self.fig, self.ax = plt.subplots(figsize=(8,6))
-        #     if self.boundary == '0_onS':
-        #         self.ax.set_xlim(0, Lx)
-        #         self.ax.set_ylim(0, Ly)
-        #     elif self.boundary == 'Max_onS': # only odd modes for true resulst
-        #         self.ax.set_xlim(-Lx/2, Lx/2)
-        #         self.ax.set_ylim(-Ly/2, Ly/2)
-
-        # elif 'circ' in self.type:
-        #     self.fig, self.ax = plt.subplots(subplot_kw={'projection':'polar'}, figsize=(8,6))
-        #     self.ax.set_ylim(0, radius + 0.05) # radius value + 0.05 for better visualization
-
         self.dot, = plt.plot([],[], 'o', ms=2, color='#cbbd93') # sand color #cbbd93
         self.ax.set_facecolor('dimgrey')    
-        # self.ax.axes.get_xaxis().set_visible(False)
-        # self.ax.axes.get_yaxis().set_visible(False)
     
 
     def plot_for_waves(self) -> None:
@@ -144,25 +128,28 @@ def main():
     # Tkinter GUI setup
     root = tk.Tk()
     root.title("Interactive Chladni Figures")
-    root.minsize(900, 700)
+    root.minsize(1000, 800)
 
     def set_global_variables():
-        global waves_or_particles, rect_or_circ, zero_or_max_onS
+        global waves_or_particles, rect_or_circ, zero_or_max_onS, wave_speed_in_membrane, absolute
         waves_or_particles = 'particles'
         rect_or_circ = 'rect'
         zero_or_max_onS = '0_onS'
+
+        wave_speed_in_membrane = 0.75
+        absolute = 'no'
 
     set_global_variables()
 
     # Update function for the animation,
     def animate(i):
-        global ensemble, waves_or_particles
+        global ensemble, waves_or_particles, wave_speed_in_membrane, absolute
         n_mode = slider_n.get()
         m_mode = slider_m.get()
         if 'membrane' in globals():
             if waves_or_particles == 'particles':
                 if i%5 == 0:
-                    ensemble.step(L_x=Lx, L_y=Ly, n=n_mode, m=m_mode, boundary=membrane.boundary, mtype=membrane.type, abso='yes')
+                    ensemble.step(L_x=Lx, L_y=Ly, n=n_mode, m=m_mode, boundary=membrane.boundary, mtype=membrane.type, abso=absolute)
 
                 points = ensemble.prev_points + (i%5)/5 * (ensemble.points - ensemble.prev_points)
                 if 'circ' in membrane.type:
@@ -171,11 +158,11 @@ def main():
                     membrane.dot.set_data(*points)
             elif waves_or_particles == 'waves':
                 if membrane.type == 'rect':
-                    omega = rect_omega(n=n_mode, m=m_mode, L_x=Lx, L_y=Ly, speed_of_sound=0.5)
+                    omega = rect_omega(n=n_mode, m=m_mode, L_x=Lx, L_y=Ly, wave_speed=wave_speed_in_membrane)
                 elif 'circ' in membrane.type:
-                    omega = circ_omega(n=n_mode, m=m_mode, radius=radius, speed_of_sound=0.5)
+                    omega = circ_omega(n=n_mode, m=m_mode, radius=radius, wave_speed=wave_speed_in_membrane)
                 amplitude = wave_amp(x_vals=membrane.x, y_vals=membrane.y, n=n_mode, m=m_mode, L_x=Lx, L_y=Ly, 
-                                     boundary=membrane.boundary, mtype=membrane.type, abso='no') * time_evolution(omega=omega, t=i / 10)
+                                     boundary=membrane.boundary, mtype=membrane.type, abso=absolute) * time_evolution(omega=omega, t=i / 10)
                 membrane.update_wave_ax(amplitude=amplitude)
                 
 
@@ -189,7 +176,7 @@ def main():
     # Initialization function for start animation
     def start_animation():
         global ani
-        ani = animation.FuncAnimation(membrane.fig, animate, frames=200, interval=30, repeat=True)
+        ani = animation.FuncAnimation(membrane.fig, animate, frames=500, interval=30, repeat=True)
         canvas.draw_idle()  # ensure the canvas updates
 
 
@@ -202,24 +189,32 @@ def main():
 
     # Radiobuttons functions
     # Check the values for animation type, shape and boundary. It should be the same for the membrane attributes and global variables.
-    def test_changes(rect_or_circ, zero_or_max_onS, waves_or_particles):
+    def test_changes(*args):
         print(f'\nanimation radiobutton: {waves_or_particles}, membrane animation: {membrane.animation_type}')
         print(f'shape radiobutton: {rect_or_circ}, membrane shape: {membrane.type}')
         print(f'boundary radiobutton: {zero_or_max_onS}, membrane boundary: {membrane.boundary}')
+        print(f'Is the wave amplitude on absolute value? {absolute}')
+        print(f'The wave speed for wave animation is: {wave_speed_in_membrane}')
 
 
     # Select animation function
     def select_animation():
         # global waves_or_particles
-        global waves_or_particles, rect_or_circ, zero_or_max_onS
+        global waves_or_particles, rect_or_circ, zero_or_max_onS, absolute
         if animation_var.get() == 1:
             waves_or_particles = 'particles'
+            if reset_button.cget("state") == "disabled": # activate the reset particles button if disabled
+                reset_button.config(state="normal")
+            if speed_button.cget("state") == "normal": # disable the wave speed apply button if activated
+                speed_button.config(state="disabled")
         elif animation_var.get() == 2:
             waves_or_particles = 'waves'
-        # shape_var.set(1)
-        # boundary_var.set(1)
+            if reset_button.cget("state") == "normal": # disable the reset particles button for waves animation
+                reset_button.config(state="disabled")
+            if speed_button.cget("state") == "disabled": # activate the wave speed apply button if disabled
+                speed_button.config(state="normal")
+
         initiate_membrane(rect_or_circ, zero_or_max_onS, waves_or_particles)
-        # print(f'animation radiobutton: {waves_or_particles}, membrane animation: {membrane.animation_type}')
         test_changes(rect_or_circ, zero_or_max_onS, waves_or_particles)
         # return waves_or_particles
     
@@ -241,11 +236,9 @@ def main():
         slider_n.set(1)
         slider_m.set(3)
         initiate_membrane(rect_or_circ, zero_or_max_onS, waves_or_particles)
-        # print(f'shape radiobutton: {rect_or_circ}, membrane shape: {membrane.type}')
         test_changes(rect_or_circ, zero_or_max_onS, waves_or_particles)
         # return rect_or_circ
 
-    
 
     # Select boundary condition
     def select_boundary():
@@ -266,11 +259,24 @@ def main():
             slider_n.config(resolution=2)
             slider_m.config(resolution=2)
         initiate_membrane(rect_or_circ, zero_or_max_onS, waves_or_particles)
-        # print(f'boundary radiobutton: {zero_or_max_onS}, membrane boundary: {membrane.boundary}')
         test_changes(rect_or_circ, zero_or_max_onS, waves_or_particles)
         # return zero_or_max_onS
 
-    
+
+    # Select absolute value
+    def select_absolute():
+        global absolute
+        if absolute_var.get() == 1:
+            absolute = 'no'
+        elif absolute_var.get() == 2:
+            absolute = 'yes'
+        test_changes()
+
+
+    def change_speed():
+        global wave_speed_in_membrane
+        wave_speed_in_membrane = float(speed_entry.get())
+
     # Initialize the membrane
     def initiate_membrane(rect_or_circ, zero_or_max_onS, waves_or_particles):
         global membrane
@@ -303,14 +309,7 @@ def main():
 
     # Initialize objects
     initiate_membrane(rect_or_circ, zero_or_max_onS, waves_or_particles) # initialize the membrane
-    # create_particles() # initialize the particles
-    # print(globals().keys())
-
-    # Main window
-    # global canvas
-    # canvas = FigureCanvasTkAgg(membrane.fig, master=frame)
-    # canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-    initiate_canves()
+    initiate_canves() # initialize the canvas
 
 
     # Sliders for n and m
@@ -343,7 +342,7 @@ def main():
     animation_var = tk.IntVar(master=right_frame, value=1)
 
     animation_label = tk.Label(master=right_frame, text='Animation:')
-    animation_label.pack(fill=tk.X, padx=10, pady=(100, 0))
+    animation_label.pack(fill=tk.X, padx=10, pady=(30, 0))
 
     particle_option = tk.Radiobutton(master=right_frame, text='Particles', variable=animation_var, value=1, indicator=0, background="light blue", command=select_animation)
     particle_option.pack(fill=tk.X, padx=10, pady=(10, 5))
@@ -356,7 +355,7 @@ def main():
     shape_var = tk.IntVar(master=right_frame, value=1)
 
     shape_label = tk.Label(master=right_frame, text='Shape:')
-    shape_label.pack(fill=tk.X, padx=10, pady=(50, 0))
+    shape_label.pack(fill=tk.X, padx=10, pady=(30, 0))
 
     rectangular_option = tk.Radiobutton(master=right_frame, text='rect', variable=shape_var, value=1, indicator=0, background="light blue", command=select_shape)
     rectangular_option.pack(fill=tk.X, padx=10, pady=(10, 5))
@@ -372,13 +371,39 @@ def main():
     boundary_var = tk.IntVar(master=right_frame, value=1)
 
     boundary_label = tk.Label(master=right_frame, text='Boundary:')
-    boundary_label.pack(fill=tk.X, padx=10, pady=(50, 0))
+    boundary_label.pack(fill=tk.X, padx=10, pady=(30, 0))
 
     zero_onS_option = tk.Radiobutton(master=right_frame, text='0_onS', variable=boundary_var, value=1, indicator=0, background="light blue", command=select_boundary)
     zero_onS_option.pack(fill=tk.X, padx=10, pady=(10, 5))
 
     Max_onS_option = tk.Radiobutton(master=right_frame, text='Max_onS', variable=boundary_var, value=2, indicator=0, background="light blue", command=select_boundary)
     Max_onS_option.pack(fill=tk.X, padx=10, pady=(10))
+
+
+    # Radiobuttons for absolute value for the wave ('yes'/'no')
+    absolute_var = tk.IntVar(master=right_frame, value=1)
+
+    absolute_label = tk.Label(master=right_frame, text='Amplitude\n Absolute Value:')
+    absolute_label.pack(fill=tk.X, padx=10, pady=(30, 0))
+
+    no_absolute_option = tk.Radiobutton(master=right_frame, text='no', variable=absolute_var, value=1, indicator=0, background="light blue", command=select_absolute)
+    no_absolute_option.pack(fill=tk.X, padx=10, pady=(10, 5))
+
+    yes_absolute_option = tk.Radiobutton(master=right_frame, text='yes', variable=absolute_var, value=2, indicator=0, background="light blue", command=select_absolute)
+    yes_absolute_option.pack(fill=tk.X, padx=10, pady=(10, 5))
+
+
+    # Option to change the wave speed for wave animation
+    speed_var = tk.StringVar(master=right_frame, value='0.75')
+
+    speed_label = tk.Label(master=right_frame, text='Wave Speed:')
+    speed_label.pack(fill=tk.X, padx=10, pady=(30, 0))
+
+    speed_entry = tk.Entry(master=right_frame, textvariable=speed_var, width=10)
+    speed_entry.pack(padx=10, pady=(10, 5))
+
+    speed_button = tk.Button(master=right_frame, text='Apply Speed', command=change_speed, state='disabled')
+    speed_button.pack(padx=10, pady=(10, 5))
 
 
     # Run the Tkinter main loop

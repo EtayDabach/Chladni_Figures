@@ -68,7 +68,7 @@ def time_evolution(omega:float, t:float) -> float:
 
 
 
-def rect_omega(n:int, m:int, L_x=1, L_y=1, speed_of_sound=1.0) -> float:
+def rect_omega(n:int, m:int, L_x=1, L_y=1, wave_speed=1.0) -> float:
     """
     Calculate the angular velocity of the wave in rectangular membrane based on the modes n and m and the shape L_x and L_y.
 
@@ -82,11 +82,11 @@ def rect_omega(n:int, m:int, L_x=1, L_y=1, speed_of_sound=1.0) -> float:
     Returns:
         float: Returns the angular velocity, omega, in rectangular membrane.
     """
-    return speed_of_sound * np.sqrt((n/L_x)**2 + (m/L_y)**2)
+    return wave_speed * np.sqrt((n/L_x)**2 + (m/L_y)**2)
 
 
 
-def circ_omega(n:int, m:int, radius=1.0, speed_of_sound=1.0) -> float:
+def circ_omega(n:int, m:int, radius=1.0, wave_speed=1.0) -> float:
     """
     Calculate the angular velocity of the wave in circular membrane based on the modes n and m and the radius.
 
@@ -100,7 +100,7 @@ def circ_omega(n:int, m:int, radius=1.0, speed_of_sound=1.0) -> float:
         float: Returns the angular velocity, omega, in circular membrane.
     """
     k_nm = sps.jn_zeros(n,m)[m-1]
-    return (k_nm / radius) * speed_of_sound
+    return (k_nm / radius) * wave_speed
 
 
 
