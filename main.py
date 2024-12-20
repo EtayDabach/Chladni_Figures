@@ -130,14 +130,16 @@ def main():
     root.title("Interactive Chladni Figures")
     root.minsize(1000, 800)
 
+    # Setting global variables to control the animation
     def set_global_variables():
-        global waves_or_particles, rect_or_circ, zero_or_max_onS, wave_speed_in_membrane, absolute
+        global waves_or_particles, rect_or_circ, zero_or_max_onS, wave_speed_in_membrane, absolute, delta_step
         waves_or_particles = 'particles'
         rect_or_circ = 'rect'
         zero_or_max_onS = '0_onS'
 
         wave_speed_in_membrane = 0.75
         absolute = 'no'
+        delta_step = 0.1
 
     set_global_variables()
 
@@ -168,9 +170,9 @@ def main():
 
     # Create function for reset particle animation
     def create_particles():
-        global ensemble
+        global ensemble, delta_step
         if 'membrane' in globals():
-            ensemble = Particles(amplitude=wave_amp, a=membrane.a, b=membrane.b, ttype=membrane.type, num_points=10000, delta=0.1)
+            ensemble = Particles(amplitude=wave_amp, a=membrane.a, b=membrane.b, ttype=membrane.type, num_points=10000, delta=delta_step)
     
 
     # Initialization function for start animation
@@ -195,6 +197,7 @@ def main():
         print(f'boundary radiobutton: {zero_or_max_onS}, membrane boundary: {membrane.boundary}')
         print(f'Is the wave amplitude on absolute value? {absolute}')
         print(f'The wave speed for wave animation is: {wave_speed_in_membrane}')
+        print(f'The particles delta step value is: {delta_step}')
 
 
     # Select animation function
@@ -207,12 +210,16 @@ def main():
                 reset_button.config(state="normal")
             if speed_button.cget("state") == "normal": # disable the wave speed apply button if activated
                 speed_button.config(state="disabled")
+            if step_button.cget("state") == "disabled": # activate the step apply button if disabled
+                step_button.config(state="normal")
         elif animation_var.get() == 2:
             waves_or_particles = 'waves'
-            if reset_button.cget("state") == "normal": # disable the reset particles button for waves animation
+            if reset_button.cget("state") == "normal": # disable the reset particles button in waves animation
                 reset_button.config(state="disabled")
             if speed_button.cget("state") == "disabled": # activate the wave speed apply button if disabled
                 speed_button.config(state="normal")
+            if step_button.cget("state") == "normal": # disable the step apply button in waves animation
+                step_button.config(state="disabled")
 
         initiate_membrane(rect_or_circ, zero_or_max_onS, waves_or_particles)
         test_changes(rect_or_circ, zero_or_max_onS, waves_or_particles)
@@ -273,12 +280,30 @@ def main():
         test_changes()
 
 
+    # Change wave speed
     def change_speed():
         global wave_speed_in_membrane
         wave_speed_in_membrane = float(speed_entry.get())
 
+
+    # Change particles step
+    def change_step():
+        global delta_step
+        delta_step = float(step_entry.get())
+        create_particles()
+    
+
     # Initialize the membrane
-    def initiate_membrane(rect_or_circ, zero_or_max_onS, waves_or_particles):
+    def initiate_membrane(rect_or_circ:str, zero_or_max_onS:str, waves_or_particles:str) -> None:
+        """
+        Initialize the membrane by the given parameters.
+
+        Args:
+            rect_or_circ (str): Define the shape of the membrane: 'rect', 'circ_sym' or 'circ_gen'
+            zero_or_max_onS (str): Define the boundary condition for the membrane. Only for shape 'rect' you can choose between '0_onS' or 'Max_onS', 
+                                   for any 'circ' its always '0_onS'.
+            waves_or_particles (str): Define the animation type: 'particles' or 'waves'.
+        """
         global membrane
         stop_animation() 
         membrane = Membrane(mtype=rect_or_circ, boundary=zero_or_max_onS, atype=waves_or_particles) # for mtype: 'rect', 'circ_sym' or 'circ_gen'. for atype: 'particles' or 'waves'.
@@ -345,10 +370,10 @@ def main():
     animation_label.pack(fill=tk.X, padx=10, pady=(30, 0))
 
     particle_option = tk.Radiobutton(master=right_frame, text='Particles', variable=animation_var, value=1, indicator=0, background="light blue", command=select_animation)
-    particle_option.pack(fill=tk.X, padx=10, pady=(10, 5))
+    particle_option.pack(fill=tk.X, padx=10, pady=(5, 5))
 
     waves_option = tk.Radiobutton(master=right_frame, text='Waves', variable=animation_var, value=2, indicator=0, background="light blue", command=select_animation)
-    waves_option.pack(fill=tk.X, padx=10, pady=(10))
+    waves_option.pack(fill=tk.X, padx=10, pady=(5))
 
 
     # Radiobuttons for rectangular/circular(sym or gen) membrane shape
@@ -358,13 +383,13 @@ def main():
     shape_label.pack(fill=tk.X, padx=10, pady=(30, 0))
 
     rectangular_option = tk.Radiobutton(master=right_frame, text='rect', variable=shape_var, value=1, indicator=0, background="light blue", command=select_shape)
-    rectangular_option.pack(fill=tk.X, padx=10, pady=(10, 5))
+    rectangular_option.pack(fill=tk.X, padx=10, pady=(5, 5))
 
     circular_sym_option = tk.Radiobutton(master=right_frame, text='circ_sym', variable=shape_var, value=2, indicator=0, background="light blue", command=select_shape)
-    circular_sym_option.pack(fill=tk.X, padx=10, pady=(10, 5))
+    circular_sym_option.pack(fill=tk.X, padx=10, pady=(5, 5))
 
     circular_gen_option = tk.Radiobutton(master=right_frame, text='circ_gen', variable=shape_var, value=3, indicator=0, background="light blue", command=select_shape)
-    circular_gen_option.pack(fill=tk.X, padx=10, pady=(10))
+    circular_gen_option.pack(fill=tk.X, padx=10, pady=(5))
 
 
     # Radiobuttons for 0_onS/Max_onS boundary condition
@@ -374,10 +399,10 @@ def main():
     boundary_label.pack(fill=tk.X, padx=10, pady=(30, 0))
 
     zero_onS_option = tk.Radiobutton(master=right_frame, text='0_onS', variable=boundary_var, value=1, indicator=0, background="light blue", command=select_boundary)
-    zero_onS_option.pack(fill=tk.X, padx=10, pady=(10, 5))
+    zero_onS_option.pack(fill=tk.X, padx=10, pady=(5, 5))
 
     Max_onS_option = tk.Radiobutton(master=right_frame, text='Max_onS', variable=boundary_var, value=2, indicator=0, background="light blue", command=select_boundary)
-    Max_onS_option.pack(fill=tk.X, padx=10, pady=(10))
+    Max_onS_option.pack(fill=tk.X, padx=10, pady=(5))
 
 
     # Radiobuttons for absolute value for the wave ('yes'/'no')
@@ -387,10 +412,10 @@ def main():
     absolute_label.pack(fill=tk.X, padx=10, pady=(30, 0))
 
     no_absolute_option = tk.Radiobutton(master=right_frame, text='no', variable=absolute_var, value=1, indicator=0, background="light blue", command=select_absolute)
-    no_absolute_option.pack(fill=tk.X, padx=10, pady=(10, 5))
+    no_absolute_option.pack(fill=tk.X, padx=10, pady=(5, 5))
 
     yes_absolute_option = tk.Radiobutton(master=right_frame, text='yes', variable=absolute_var, value=2, indicator=0, background="light blue", command=select_absolute)
-    yes_absolute_option.pack(fill=tk.X, padx=10, pady=(10, 5))
+    yes_absolute_option.pack(fill=tk.X, padx=10, pady=(5, 5))
 
 
     # Option to change the wave speed for wave animation
@@ -400,10 +425,23 @@ def main():
     speed_label.pack(fill=tk.X, padx=10, pady=(30, 0))
 
     speed_entry = tk.Entry(master=right_frame, textvariable=speed_var, width=10)
-    speed_entry.pack(padx=10, pady=(10, 5))
+    speed_entry.pack(padx=10, pady=(5, 5))
 
     speed_button = tk.Button(master=right_frame, text='Apply Speed', command=change_speed, state='disabled')
-    speed_button.pack(padx=10, pady=(10, 5))
+    speed_button.pack(padx=10, pady=(5, 5))
+
+
+    # Option to change the delta step for particles animation
+    step_var = tk.StringVar(master=right_frame, value='0.1')
+
+    step_label = tk.Label(master=right_frame, text='Particles Step:')
+    step_label.pack(fill=tk.X, padx=10, pady=(30, 0))
+
+    step_entry = tk.Entry(master=right_frame, textvariable=step_var, width=10)
+    step_entry.pack(padx=10, pady=(5, 5))
+
+    step_button = tk.Button(master=right_frame, text='Apply Step', command=change_step)
+    step_button.pack(padx=10, pady=(5, 5))
 
 
     # Run the Tkinter main loop
