@@ -58,3 +58,7 @@ $$f_{n,m} = \frac{k_{n,m}}{2\pi R}*v$$
 <hr>
 
 <h2> GUI explanation (will be added soon with a short video/gif) </h2>
+
+
+
+
